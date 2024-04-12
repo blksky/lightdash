@@ -9,9 +9,10 @@ import MantineLinkButton from '../../common/MantineLinkButton';
 interface Props {
     userName: string | undefined;
     projectUuid: string;
+    spaceUuid: string;
 }
 
-const LandingPanel: FC<Props> = ({ userName, projectUuid }) => {
+const LandingPanel: FC<Props> = ({ userName, projectUuid,spaceUuid }) => {
     const { user } = useApp();
     return (
         <Group position="apart" my="xl">
@@ -32,7 +33,7 @@ const LandingPanel: FC<Props> = ({ userName, projectUuid }) => {
                     projectUuid: projectUuid,
                 })}
             >
-                <MantineLinkButton href={`/projects/${projectUuid}/tables`}>
+                <MantineLinkButton href={`/projects/${projectUuid}/${spaceUuid}/tables`}>
                     Run a query
                 </MantineLinkButton>
             </Can>

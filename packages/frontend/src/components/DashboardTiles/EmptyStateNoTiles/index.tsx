@@ -27,7 +27,7 @@ const EmptyStateNoTiles: FC<SavedChartsAvailableProps> = ({
     onAddTiles,
     isEditMode,
 }) => {
-    const { projectUuid } = useParams<{ projectUuid: string }>();
+    const { projectUuid, spaceUuid } = useParams<{ projectUuid: string, spaceUuid:string }>();
     const { user } = useApp();
     const savedChartsRequest = useChartSummaries(projectUuid);
 
@@ -74,7 +74,7 @@ const EmptyStateNoTiles: FC<SavedChartsAvailableProps> = ({
                                     leftIcon={
                                         <MantineIcon icon={IconPlayerPlay} />
                                     }
-                                    href={`/projects/${projectUuid}/tables`}
+                                    href={`/projects/${projectUuid}/${spaceUuid}/tables`}
                                 >
                                     Run a query
                                 </MantineLinkButton>

@@ -46,8 +46,9 @@ const AddTileButton: FC<Props> = ({ onAddTiles, disabled }) => {
         },
         [onAddTiles],
     );
-    const { projectUuid } = useParams<{
+    const { projectUuid,spaceUuid } = useParams<{
         projectUuid: string;
+        spaceUuid: string;
     }>();
 
     return (
@@ -87,7 +88,7 @@ const AddTileButton: FC<Props> = ({ onAddTiles, disabled }) => {
                                 dashboard?.uuid,
                                 dashboard?.name,
                             );
-                            history.push(`/projects/${projectUuid}/tables`);
+                            history.push(`/projects/${projectUuid}/${spaceUuid}/tables`);
                         }}
                         icon={<MantineIcon icon={IconPlus} />}
                     >

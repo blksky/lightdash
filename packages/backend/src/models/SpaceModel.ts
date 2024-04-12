@@ -12,6 +12,7 @@ import {
     ProjectRole,
     Space,
     SpaceDashboard,
+    SpaceDatabase,
     SpaceMemberRole,
     SpaceQuery,
     SpaceShare,
@@ -59,6 +60,10 @@ import { UserTableName } from '../database/entities/users';
 import { DbValidationTable } from '../database/entities/validation';
 import { wrapOtelSpan } from '../utils';
 import type { GetDashboardDetailsQuery } from './DashboardModel/DashboardModel';
+import {
+    DbSpaceDatabase,
+    SpaceDatabaseTableName,
+} from '../database/entities/spaceDatabase';
 
 type SpaceModelArguments = {
     database: Knex;
@@ -90,7 +95,11 @@ export class SpaceModel {
     ): Promise<
         DbSpace &
             Pick<DbPinnedList, 'pinned_list_uuid'> &
-            Pick<DBPinnedSpace, 'order'>
+            Pick<DBPinnedSpace, 'order'> &
+            Pick<
+                DbSpaceDatabase,
+                'dbtype_id' | 'db_url' | 'db_user' | 'db_password'
+            >
     > {
         const space = await db('spaces')
             .innerJoin('projects', 'projects.project_id', 'spaces.project_id')
@@ -119,6 +128,11 @@ export class SpaceModel {
                 `${SpaceUserAccessTableName}.user_uuid`,
                 `${UserTableName}.user_uuid`,
             )
+            .leftJoin(
+                SpaceDatabaseTableName,
+                `${SpaceDatabaseTableName}.space_uuid`,
+                `${SpaceTableName}.space_uuid`,
+            )
             .where((q) => {
                 void q
                     .where(`${UserTableName}.user_uuid`, userUuid)
@@ -128,7 +142,11 @@ export class SpaceModel {
             .select<
                 (DbSpace &
                     Pick<DbPinnedList, 'pinned_list_uuid'> &
-                    Pick<DBPinnedSpace, 'order'>)[]
+                    Pick<DBPinnedSpace, 'order'> &
+                    Pick<
+                        DbSpaceDatabase,
+                        'dbtype_id' | 'db_url' | 'db_user' | 'db_password'
+                    >)[]
             >([
                 'spaces.space_id',
                 'spaces.space_uuid',
@@ -138,6 +156,10 @@ export class SpaceModel {
                 'organizations.organization_uuid',
                 `${PinnedListTableName}.pinned_list_uuid`,
                 `${PinnedSpaceTableName}.order`,
+                `${SpaceDatabaseTableName}.dbtype_id`,
+                `${SpaceDatabaseTableName}.db_url`,
+                `${SpaceDatabaseTableName}.db_user`,
+                `${SpaceDatabaseTableName}.db_password`,
             ])
             .first();
 
@@ -280,6 +302,13 @@ export class SpaceModel {
             projectUuid,
             dashboards: [],
             access: [],
+            database: {
+                dbtypeId: space.dbtype_id,
+                spaceUuid: space.space_uuid,
+                dbUrl: space.db_url,
+                dbUser: space.db_user,
+                dbPassword: space.db_password,
+            },
         };
     }
 
@@ -390,13 +419,22 @@ export class SpaceModel {
                 `${PinnedListTableName}.pinned_list_uuid`,
                 `${PinnedSpaceTableName}.pinned_list_uuid`,
             )
+            .leftJoin(
+                SpaceDatabaseTableName,
+                `${SpaceDatabaseTableName}.space_uuid`,
+                `${SpaceTableName}.space_uuid`,
+            )
             .where(`${SpaceTableName}.space_uuid`, spaceUuid)
             .select<
                 (DbSpace &
                     DbProject &
                     DbOrganization &
                     Pick<DbPinnedList, 'pinned_list_uuid'> &
-                    Pick<DBPinnedSpace, 'order'>)[]
+                    Pick<DBPinnedSpace, 'order'> &
+                    Pick<
+                        DbSpaceDatabase,
+                        'dbtype_id' | 'db_url' | 'db_user' | 'db_password'
+                    >)[]
             >([
                 'spaces.*',
 
@@ -405,6 +443,10 @@ export class SpaceModel {
 
                 `${PinnedListTableName}.pinned_list_uuid`,
                 `${PinnedSpaceTableName}.order`,
+                `${SpaceDatabaseTableName}.dbtype_id`,
+                `${SpaceDatabaseTableName}.db_url`,
+                `${SpaceDatabaseTableName}.db_user`,
+                `${SpaceDatabaseTableName}.db_password`,
             ]);
         if (row === undefined)
             throw new NotFoundError(
@@ -419,6 +461,12 @@ export class SpaceModel {
             projectUuid: row.project_uuid,
             pinnedListUuid: row.pinned_list_uuid,
             pinnedListOrder: row.order,
+            database: {
+                dbtypeId: row.dbtype_id,
+                dbUrl: row.db_url,
+                dbUser: row.db_user,
+                dbPassword: row.db_password,
+            },
         };
     }
 
@@ -798,6 +846,29 @@ export class SpaceModel {
         );
     }
 
+    private async _getSpaceDatabase(spaceUuid: string): Promise<SpaceDatabase> {
+        const spaceDatabase = await this.database
+            .table(SpaceDatabaseTableName)
+            .where(`${SpaceDatabaseTableName}.space_uuid`, spaceUuid)
+            .select<{
+                db_id: number;
+                dbtype_id: number;
+                space_uuid: string;
+                db_url: string;
+                db_user: string;
+                db_password: string;
+            }>(`*`);
+
+        return {
+            spaceUuid,
+            dbId: spaceDatabase.db_id,
+            dbtypeId: spaceDatabase.dbtype_id,
+            dbUrl: spaceDatabase.db_url,
+            dbUser: spaceDatabase.db_user,
+            dbPassword: spaceDatabase.db_password,
+        };
+    }
+
     async getUserSpaceAccess(
         userUuid: string,
         spaceUuid: string,
@@ -1049,6 +1120,7 @@ export class SpaceModel {
             queries: await this.getSpaceQueries([space.uuid]),
             dashboards: await this.getSpaceDashboards([space.uuid]),
             access: await this._getSpaceAccess(space.uuid),
+            database: await this._getSpaceDatabase(space.uuid),
         };
     }
 
@@ -1057,6 +1129,7 @@ export class SpaceModel {
         name: string,
         userId: number,
         isPrivate: boolean,
+        database: SpaceDatabase,
     ): Promise<Space> {
         const [project] = await this.database('projects')
             .select('project_id')
@@ -1071,6 +1144,15 @@ export class SpaceModel {
             })
             .returning('*');
 
+        const [spaceDatabase] = await this.database(SpaceDatabaseTableName)
+            .insert({
+                dbtype_id: database.dbtypeId,
+                db_url: database.dbUrl,
+                db_user: database.dbUser,
+                db_password: database.dbPassword,
+            })
+            .returning('*');
+
         return {
             organizationUuid: space.organization_uuid,
             name: space.name,
@@ -1082,6 +1164,13 @@ export class SpaceModel {
             access: [],
             pinnedListUuid: null,
             pinnedListOrder: null,
+            database: {
+                dbtypeId: spaceDatabase.dbtype_id,
+                spaceUuid: spaceDatabase.space_uuid,
+                dbUrl: spaceDatabase.db_url,
+                dbUser: spaceDatabase.db_user,
+                dbPassword: spaceDatabase.db_password,
+            },
         };
     }
 

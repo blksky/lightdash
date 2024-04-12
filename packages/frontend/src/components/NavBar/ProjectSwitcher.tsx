@@ -10,13 +10,16 @@ import {
 } from '../../hooks/useActiveProject';
 import { useProjects } from '../../hooks/useProjects';
 
-const swappableProjectRoutes = (activeProjectUuid: string) => [
+const swappableProjectRoutes = (
+    activeProjectUuid: string,
+    spaceUuid: string,
+) => [
     `/projects/${activeProjectUuid}/home`,
     `/projects/${activeProjectUuid}/saved`,
     `/projects/${activeProjectUuid}/dashboards`,
     `/projects/${activeProjectUuid}/spaces`,
     `/projects/${activeProjectUuid}/sqlRunner`,
-    `/projects/${activeProjectUuid}/tables`,
+    `/projects/${activeProjectUuid}/${spaceUuid}/tables`,
     `/projects/${activeProjectUuid}/user-activity`,
     `/projects/${activeProjectUuid}`,
     `/generalSettings`,
@@ -41,10 +44,14 @@ const ProjectSwitcher = () => {
     const { showToastSuccess } = useToaster();
     const history = useHistory();
 
-    const { isInitialLoading: isLoadingProjects, data: projects } =
-        useProjects();
-    const { isLoading: isLoadingActiveProjectUuid, activeProjectUuid } =
-        useActiveProjectUuid();
+    const {
+        isInitialLoading: isLoadingProjects,
+        data: projects,
+    } = useProjects();
+    const {
+        isLoading: isLoadingActiveProjectUuid,
+        activeProjectUuid,
+    } = useActiveProjectUuid();
     const { mutate: setLastProjectMutation } = useUpdateActiveProjectMutation();
 
     const isHomePage = !!useRouteMatch({

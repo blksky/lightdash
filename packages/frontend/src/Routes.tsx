@@ -212,14 +212,14 @@ const Routes: FC = () => {
                                         </TrackPage>
                                     </Route>
 
-                                    <Route path="/projects/:projectUuid/tables/:tableId">
+                                    <Route path="/projects/:projectUuid/:spaceUuid/tables/:tableId">
                                         <NavBar />
                                         <TrackPage name={PageName.EXPLORER}>
                                             <Explorer />
                                         </TrackPage>
                                     </Route>
 
-                                    <Route path="/projects/:projectUuid/tables">
+                                    <Route path="/projects/:projectUuid/:spaceUuid/tables">
                                         <NavBar />
                                         <TrackPage
                                             name={PageName.EXPLORE_TABLES}

@@ -36,7 +36,7 @@ const CreateResourceToSpace: FC<Props> = ({ resourceType }) => {
         switch (resourceType) {
             case AddToSpaceResources.CHART:
                 return history.push(
-                    `/projects/${projectUuid}/tables/?fromSpace=${spaceUuid}`,
+                    `/projects/${projectUuid}/${spaceUuid}/tables/?fromSpace=${spaceUuid}`,
                 );
             case AddToSpaceResources.DASHBOARD:
                 return createDashboard({

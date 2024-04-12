@@ -187,6 +187,8 @@ export * from './types/userAttributes';
 export * from './types/userWarehouseCredentials';
 export * from './types/validation';
 export * from './types/warehouse';
+export * from './types/spaceDatabaseType';
+export * from './types/spaceDatabase';
 export * from './utils/additionalMetrics';
 export * from './utils/api';
 export { default as assertUnreachable } from './utils/assertUnreachable';
@@ -437,6 +439,10 @@ export type ApiCompiledQueryResults = string;
 export type ApiExploresResults = SummaryExplore[];
 
 export type ApiExploreResults = Explore;
+
+export type ApiTablesResults = SummaryExplore[];
+
+export type ApiTableResults = Explore;
 
 export type ApiStatusResults = 'loading' | 'ready' | 'error';
 

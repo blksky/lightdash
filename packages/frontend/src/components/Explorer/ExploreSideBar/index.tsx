@@ -10,7 +10,7 @@ import { memo, useCallback, useMemo, useState } from 'react';
 import { useHistory, useParams } from 'react-router-dom';
 
 import { type SummaryExplore } from '@lightdash/common';
-import { useExplores } from '../../../hooks/useExplores';
+import { useTables } from '../../../hooks/useTables';
 import { useExplorerContext } from '../../../providers/ExplorerProvider';
 import { TrackSection } from '../../../providers/TrackingProvider';
 import { SectionName } from '../../../types/Events';
@@ -38,9 +38,9 @@ const LoadingSkeleton = () => (
 
 const BasePanel = () => {
     const history = useHistory();
-    const { projectUuid } = useParams<{ projectUuid: string }>();
+    const { projectUuid, spaceUuid } = useParams<{ projectUuid: string, spaceUuid: string }>();
     const [search, setSearch] = useState<string>('');
-    const exploresResult = useExplores(projectUuid, true);
+    const exploresResult = useTables(projectUuid, spaceUuid,true);
 
     const [exploreGroupMap, ungroupedExplores] = useMemo(() => {
         const validSearch = search ? search.toLowerCase() : '';
@@ -137,7 +137,7 @@ const BasePanel = () => {
                                                 query={search}
                                                 onClick={() => {
                                                     history.push(
-                                                        `/projects/${projectUuid}/tables/${explore.name}`,
+                                                        `/projects/${projectUuid}/${spaceUuid}/tables/${explore.name}`,
                                                     );
                                                 }}
                                             />
@@ -153,7 +153,7 @@ const BasePanel = () => {
                                     query={search}
                                     onClick={() => {
                                         history.push(
-                                            `/projects/${projectUuid}/tables/${explore.name}`,
+                                            `/projects/${projectUuid}/${spaceUuid}/tables/${explore.name}`,
                                         );
                                     }}
                                 />
@@ -173,7 +173,7 @@ const BasePanel = () => {
 };
 
 const ExploreSideBar = memo(() => {
-    const { projectUuid } = useParams<{ projectUuid: string }>();
+    const { projectUuid,spaceUuid } = useParams<{ projectUuid: string, spaceUuid: string }>();
     const tableName = useExplorerContext(
         (context) => context.state.unsavedChartVersion.tableName,
     );
@@ -185,8 +185,8 @@ const ExploreSideBar = memo(() => {
 
     const handleBack = useCallback(() => {
         clearExplore();
-        history.push(`/projects/${projectUuid}/tables`);
-    }, [clearExplore, history, projectUuid]);
+        history.push(`/projects/${projectUuid}/${spaceUuid}/tables`);
+    }, [clearExplore, history, projectUuid, spaceUuid]);
 
     return (
         <TrackSection name={SectionName.SIDEBAR}>

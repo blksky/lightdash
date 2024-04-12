@@ -19,7 +19,7 @@ import { useForm, zodResolver } from '@mantine/form';
 import { useCallback, useEffect, useMemo, useState, type FC } from 'react';
 import { useToggle } from 'react-use';
 import { z } from 'zod';
-import { useExplores } from '../../hooks/useExplores';
+import { useTables } from '../../hooks/useTables';
 import {
     useProjectTablesConfiguration,
     useUpdateProjectTablesConfiguration,
@@ -41,10 +41,11 @@ type FormValues = z.infer<typeof validationSchema>;
 
 type Props = {
     projectUuid: string;
+    spaceUuid: string;
     onSuccess?: () => void;
 };
 
-const ProjectTablesConfiguration: FC<Props> = ({ projectUuid, onSuccess }) => {
+const ProjectTablesConfiguration: FC<Props> = ({ projectUuid,spaceUuid, onSuccess }) => {
     const { track } = useTracking();
     const { user } = useApp();
     const ability = useAbilityContext();
@@ -52,7 +53,7 @@ const ProjectTablesConfiguration: FC<Props> = ({ projectUuid, onSuccess }) => {
     const [search, setSearch] = useState('');
 
     const { data: explores, isInitialLoading: isLoadingExplores } =
-        useExplores(projectUuid);
+        useTables(projectUuid, spaceUuid);
 
     const { data: tablesConfig, isInitialLoading: isLoadingTablesConfig } =
         useProjectTablesConfiguration(projectUuid);

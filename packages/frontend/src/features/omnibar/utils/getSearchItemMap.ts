@@ -47,6 +47,8 @@ export const getSearchItemMap = (
     }));
 
     const tables = results.tables.map<SearchItem>((item) => {
+        // todo  spaceUuid
+        const spaceUuid = 0;
         if (isTableErrorSearchResult(item)) {
             return {
                 type: SearchItemType.TABLE,
@@ -54,7 +56,7 @@ export const getSearchItemMap = (
                 title: item.exploreLabel,
                 item: item,
                 location: {
-                    pathname: `/projects/${projectUuid}/tables`,
+                    pathname: `/projects/${projectUuid}/${spaceUuid}/tables`,
                 },
             };
         }
@@ -70,7 +72,7 @@ export const getSearchItemMap = (
             description: item.description,
             item: item,
             location: {
-                pathname: `/projects/${projectUuid}/tables/${item.explore}`,
+                pathname: `/projects/${projectUuid}/${spaceUuid}/tables/${item.explore}`,
             },
         };
     });

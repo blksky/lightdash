@@ -15,7 +15,7 @@ import { getWarehouseLabel } from '../ProjectConnection/ProjectConnectFlow/Selec
 import { CreateCredentialsModal } from '../UserSettings/MyWarehouseConnectionsPanel/CreateCredentialsModal';
 
 const routesThatNeedWarehouseCredentials = [
-    '/projects/:projectUuid/tables/:tableId',
+    '/projects/:projectUuid/:spaceUuid/tables/:tableId',
     '/projects/:projectUuid/saved/:savedQueryUuid/:mode?',
     '/projects/:projectUuid/dashboards/:dashboardUuid/:mode?',
     '/projects/:projectUuid/sqlRunner',
@@ -24,8 +24,9 @@ const routesThatNeedWarehouseCredentials = [
 const UserCredentialsSwitcher = () => {
     const { user } = useApp();
     const location = useLocation();
-    const [showCreateModalOnPageLoad, setShowCreateModalOnPageLoad] =
-        useState(false);
+    const [showCreateModalOnPageLoad, setShowCreateModalOnPageLoad] = useState(
+        false,
+    );
     const isRouteThatNeedsWarehouseCredentials = useRouteMatch({
         path: routesThatNeedWarehouseCredentials,
     });
@@ -34,12 +35,17 @@ const UserCredentialsSwitcher = () => {
         isInitialLoading: isLoadingCredentials,
         data: userWarehouseCredentials,
     } = useUserWarehouseCredentials();
-    const { isInitialLoading: isLoadingProjects, data: projects } =
-        useProjects();
-    const { isLoading: isLoadingActiveProjectUuid, activeProjectUuid } =
-        useActiveProjectUuid();
-    const { data: preferredCredentials } =
-        useProjectUserWarehouseCredentialsPreference(activeProjectUuid);
+    const {
+        isInitialLoading: isLoadingProjects,
+        data: projects,
+    } = useProjects();
+    const {
+        isLoading: isLoadingActiveProjectUuid,
+        activeProjectUuid,
+    } = useActiveProjectUuid();
+    const {
+        data: preferredCredentials,
+    } = useProjectUserWarehouseCredentialsPreference(activeProjectUuid);
     const { mutate } = useProjectUserWarehouseCredentialsPreferenceMutation({
         onSuccess: () => {
             if (isRouteThatNeedsWarehouseCredentials) {

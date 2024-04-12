@@ -20,9 +20,10 @@ import SpaceActionModal, { ActionType } from '../common/SpaceActionModal';
 
 type Props = {
     projectUuid: string;
+    spaceUuid:string;
 };
 
-const ExploreMenu: FC<Props> = memo(({ projectUuid }) => {
+const ExploreMenu: FC<Props> = memo(({ projectUuid,spaceUuid }) => {
     const { user, health } = useApp();
     const history = useHistory();
     const [isOpen, setIsOpen] = useState<boolean>(false);
@@ -67,7 +68,7 @@ const ExploreMenu: FC<Props> = memo(({ projectUuid }) => {
                             component={Link}
                             title="Query from tables"
                             description="Build queries and save them as charts."
-                            to={`/projects/${projectUuid}/tables`}
+                            to={`/projects/${projectUuid}/${spaceUuid}/tables`}
                             icon={IconTable}
                         />
                         {health.data?.hasDbtSemanticLayer && (

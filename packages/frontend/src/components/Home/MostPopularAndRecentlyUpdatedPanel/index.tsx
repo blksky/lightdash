@@ -18,11 +18,12 @@ import ResourceView from '../../common/ResourceView';
 interface Props {
     data: MostPopularAndRecentlyUpdated | undefined;
     projectUuid: string;
+    spaceUuid: string;
 }
 
 export const MostPopularAndRecentlyUpdatedPanel: FC<Props> = ({
     data,
-    projectUuid,
+    projectUuid, spaceUuid
 }) => {
     const MAX_NUMBER_OF_ITEMS_IN_PANEL = 10;
     const history = useHistory();
@@ -53,7 +54,7 @@ export const MostPopularAndRecentlyUpdatedPanel: FC<Props> = ({
     }, [data?.mostPopular, data?.recentlyUpdated]);
 
     const handleCreateChart = () => {
-        history.push(`/projects/${projectUuid}/tables`);
+        history.push(`/projects/${projectUuid}/${spaceUuid}/tables`);
     };
 
     const isDemo = health.data?.mode === LightdashMode.DEMO;

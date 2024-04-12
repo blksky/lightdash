@@ -4,6 +4,7 @@ import { type OrganizationMemberRole } from './organizationMemberProfile';
 import { type ProjectMemberRole } from './projectMemberRole';
 // eslint-disable-next-line import/no-cycle
 import { type SpaceQuery } from './savedCharts';
+import { type SpaceDatabase } from './spaceDatabase';
 
 export type Space = {
     organizationUuid: string;
@@ -16,6 +17,7 @@ export type Space = {
     access: SpaceShare[];
     pinnedListUuid: string | null;
     pinnedListOrder: number | null;
+    database: SpaceDatabase
 };
 
 export type SpaceSummary = Pick<
@@ -27,6 +29,7 @@ export type SpaceSummary = Pick<
     | 'isPrivate'
     | 'pinnedListUuid'
     | 'pinnedListOrder'
+    | 'database'
 > & {
     userAccess: SpaceShare | undefined;
     access: string[];
@@ -38,11 +41,13 @@ export type CreateSpace = {
     name: string;
     isPrivate?: boolean;
     access?: Pick<SpaceShare, 'userUuid' | 'role'>[];
+    database? : SpaceDatabase
 };
 
 export type UpdateSpace = {
     name: string;
     isPrivate: boolean;
+    database? : SpaceDatabase
 };
 
 export type SpaceShare = {

@@ -87,6 +87,7 @@ const CreateSpaceModalContent: FC<CreateSpaceModalBody> = ({
             ...new Set([...projectUserUuids, ...organizationUserUuids]),
         ];
         return userUuids.reduce<SpaceShare[]>((acc, userUuid) => {
+            // @ts-ignore
             const user = organizationUsers?.find(
                 (orgUser) => orgUser.userUuid === userUuid,
             );
@@ -139,6 +140,26 @@ const CreateSpaceModalContent: FC<CreateSpaceModalBody> = ({
                             />
                         </Stack>
                     </Radio.Group>
+                    <TextInput
+                        {...form.getInputProps('database.dbtypeId')}
+                        label="数据库类型"
+                        placeholder="1"
+                    />
+                    <TextInput
+                        {...form.getInputProps('database.dbUrl')}
+                        label="数据库url"
+                        placeholder="jdbc:mysql://127.0.0.1:3306/graph_platform?useSSL=false&useAffectedRows=true"
+                    />
+                    <TextInput
+                        {...form.getInputProps('database.dbUser')}
+                        label="数据库user"
+                        placeholder="root"
+                    />
+                    <TextInput
+                        {...form.getInputProps('database.dbPassword')}
+                        label="数据库password"
+                        placeholder="123456"
+                    />
                 </Stack>
             );
 

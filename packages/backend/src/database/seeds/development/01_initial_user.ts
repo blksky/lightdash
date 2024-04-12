@@ -157,6 +157,12 @@ export async function seed(knex: Knex): Promise<void> {
         warehouse_type: 'postgres',
     });
 
+    const [{ dbtype_id: dbtypeId }] = await knex('space_database_type')
+        .insert({
+            dbtype_name: 'mysql',
+        })
+        .returning(['dbtype_id']);
+
     const [{ space_id: spaceId, space_uuid: spaceUuid }] = await knex('spaces')
         .insert({
             ...SEED_SPACE,
@@ -164,6 +170,15 @@ export async function seed(knex: Knex): Promise<void> {
             project_id: projectId,
         })
         .returning(['space_id', 'space_uuid']);
+
+    await knex('space_database').insert({
+        space_uuid: spaceUuid,
+        dbtype_id: dbtypeId,
+        db_url:
+            'jdbc:mysql://127.0.0.1:3306/graph_platform?useSSL=false&useAffectedRows=true',
+        db_user: 'root',
+        db_password: '123456',
+    });
 
     await knex('space_user_access').insert({
         user_uuid: user.user_uuid,

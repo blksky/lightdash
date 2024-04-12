@@ -18,7 +18,7 @@ import useCreateInAnySpaceAccess from '../hooks/user/useCreateInAnySpaceAccess';
 import { useApp } from '../providers/AppProvider';
 
 const SavedQueries: FC = () => {
-    const { projectUuid } = useParams<{ projectUuid: string }>();
+    const { projectUuid,spaceUuid } = useParams<{ projectUuid: string,spaceUuid:string }>();
     const { isInitialLoading, data: savedQueries = [] } =
         useCharts(projectUuid);
 
@@ -38,7 +38,7 @@ const SavedQueries: FC = () => {
     }
 
     const handleCreateChart = () => {
-        history.push(`/projects/${projectUuid}/tables`);
+        history.push(`/projects/${projectUuid}/${spaceUuid}/tables`);
     };
 
     return (

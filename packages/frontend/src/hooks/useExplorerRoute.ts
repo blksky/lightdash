@@ -15,6 +15,7 @@ import useToaster from './toaster/useToaster';
 
 export const getExplorerUrlFromCreateSavedChartVersion = (
     projectUuid: string,
+    spaceUuid: string,
     createSavedChart: CreateSavedChartVersion,
 ): { pathname: string; search: string } => {
     const newParams = new URLSearchParams();
@@ -24,7 +25,7 @@ export const getExplorerUrlFromCreateSavedChartVersion = (
     );
 
     return {
-        pathname: `/projects/${projectUuid}/tables/${createSavedChart.tableName}`,
+        pathname: `/projects/${projectUuid}/${spaceUuid}/tables/${createSavedChart.tableName}`,
         search: newParams.toString(),
     };
 };
@@ -75,6 +76,7 @@ export const useExplorerRoute = () => {
     const history = useHistory();
     const pathParams = useParams<{
         projectUuid: string;
+        spaceUuid: string;
         tableId: string | undefined;
     }>();
 
@@ -98,6 +100,7 @@ export const useExplorerRoute = () => {
             history.replace(
                 getExplorerUrlFromCreateSavedChartVersion(
                     pathParams.projectUuid,
+                    pathParams.spaceUuid,
                     {
                         ...unsavedChartVersion,
                         metricQuery: queryResultsData.metricQuery,
@@ -109,6 +112,7 @@ export const useExplorerRoute = () => {
         queryResultsData,
         history,
         pathParams.projectUuid,
+        pathParams.spaceUuid,
         unsavedChartVersion,
         dateZoom,
     ]);

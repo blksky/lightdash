@@ -864,7 +864,7 @@ const SavedChartsHeader: FC = () => {
                             if (action === 'POP') {
                                 if (location.pathname.includes('/tables/')) {
                                     history.push(
-                                        `/projects/${projectUuid}/tables`,
+                                        `/projects/${projectUuid}/${spaceUuid}/tables`,
                                     );
                                 }
                             }

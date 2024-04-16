@@ -29,6 +29,7 @@ export enum SupportedDbtAdapter {
     REDSHIFT = 'redshift',
     POSTGRES = 'postgres',
     TRINO = 'trino',
+    MYSQL = 'mysql'
 }
 
 export type DbtNodeConfig = {

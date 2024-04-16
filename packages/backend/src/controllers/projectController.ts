@@ -39,6 +39,7 @@ import {
     unauthorisedInDemo,
 } from './authentication';
 import { BaseController } from './baseController';
+import knex from 'knex';
 
 @Route('/api/v1/projects')
 @Response<ApiErrorPayload>('default', 'Error')

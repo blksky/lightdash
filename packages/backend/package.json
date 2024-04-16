@@ -25,7 +25,8 @@
         "@types/archiver": "^6.0.2",
         "copyfiles": "^2.4.1",
         "jest-fetch-mock": "^3.0.3",
-        "knex-mock-client": "^1.11.0"
+        "knex-mock-client": "^1.11.0",
+        "mysql": "^2.18.1"
     },
     "dependencies": {
         "@aws-sdk/client-s3": "^3.272.0",
@@ -122,7 +123,7 @@
     },
     "scripts": {
         "generate-api": "tsoa spec-and-routes --configuration tsoa.yml",
-        "dev": "LIGHTDASH_MODE=development HEADLESS=true tsx watch --clear-screen=false src/index.ts",
+        "dev": "LIGHTDASH_MODE=development HEADLESS=true tsx watch --clear-screen=false --inspect-brk=0.0.0.0:9229 src/index.ts",
         "debug": "tsx watch --clear-screen=false --inspect-brk=0.0.0.0:9229 src/index.ts ",
         "build": "tsc --build tsconfig.json",
         "postbuild": "copyfiles --error --up 1 src/**/*.html dist",

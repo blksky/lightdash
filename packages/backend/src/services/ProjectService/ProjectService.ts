@@ -147,6 +147,8 @@ import {
     exploreHasFilteredAttribute,
     getFilteredExplore,
 } from '../UserAttributesService/UserAttributeUtils';
+import knex from 'knex';
+import { runMysqlQuery } from '../../utils/MysqlUtil';
 
 type RunQueryTags = {
     project_uuid?: string;
@@ -2111,6 +2113,10 @@ export class ProjectService extends BaseService {
                 projectId: projectUuid,
             },
         });
+
+        const resultsKnex = await runMysqlQuery(sql);
+        console.log(resultsKnex[0]);
+
         const { warehouseClient, sshTunnel } = await this._getWarehouseClient(
             projectUuid,
             await this.getWarehouseCredentials(projectUuid, user.userUuid),

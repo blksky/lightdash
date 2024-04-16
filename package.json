@@ -55,6 +55,7 @@
         "common-fix-format": "yarn workspace @lightdash/common fix-format",
         "common-test": "yarn workspace @lightdash/common test",
         "backend-dev": "yarn workspace backend dev",
+        "backend-debug": "yarn workspace backend debug",
         "backend-build": "yarn workspace backend build",
         "backend-start": "yarn workspace backend start",
         "backend-lint": "yarn workspace backend lint",

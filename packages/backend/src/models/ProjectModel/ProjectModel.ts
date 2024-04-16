@@ -1,12 +1,13 @@
 import {
-    AlreadyExistsError,
+    AlreadyExistsError, type CompiledDimension, type CompiledMetric,
+    CompiledTable,
     CreateDbtCloudIntegration,
     CreateProject,
     CreateWarehouseCredentials,
     DbtCloudIntegration,
-    DbtProjectConfig,
+    DbtProjectConfig, DimensionType,
     Explore,
-    ExploreError,
+    ExploreError, FieldType,
     isExploreError,
     NotExistsError,
     OrganizationProject,
@@ -20,6 +21,7 @@ import {
     sensitiveCredentialsFieldNames,
     sensitiveDbtCredentialsFieldNames,
     SpaceSummary,
+    SupportedDbtAdapter,
     SupportedDbtVersions,
     TablesConfiguration,
     UnexpectedServerError,
@@ -32,9 +34,10 @@ import {
     WarehouseCatalog,
     warehouseClientFromCredentials,
 } from '@lightdash/warehouses';
-import { Knex } from 'knex';
+import knex, { Knex } from 'knex';
 import uniqWith from 'lodash/uniqWith';
 import { DatabaseError } from 'pg';
+
 import { LightdashConfig } from '../../config/parseConfig';
 import {
     DashboardViewsTableName,
@@ -65,6 +68,7 @@ import Logger from '../../logging/logger';
 import { wrapOtelSpan } from '../../utils';
 import { EncryptionUtil } from '../../utils/EncryptionUtil/EncryptionUtil';
 import Transaction = Knex.Transaction;
+import { runMysqlQuery } from '../../utils/MysqlUtil';
 
 type ProjectModelArguments = {
     database: Knex;
@@ -195,8 +199,7 @@ export class ProjectModel {
                         projectUuid: project_uuid,
                         type: project_type,
                         warehouseType: warehouse_type as WarehouseTypes,
-                        requireUserCredentials:
-                            !!warehouseCredentials.requireUserCredentials,
+                        requireUserCredentials: !!warehouseCredentials.requireUserCredentials,
                     };
                 } catch (e) {
                     throw new UnexpectedServerError(
@@ -558,12 +561,73 @@ export class ProjectModel {
     async getExploresFromCache(
         projectUuid: string,
     ): Promise<(Explore | ExploreError)[] | undefined> {
-        const explores = await this.database(CachedExploresTableName)
-            .select(['explores'])
-            .where('project_uuid', projectUuid)
-            .limit(1);
-        if (explores.length > 0) return explores[0].explores;
-        return undefined;
+        const dbName = process.env.MYSQLDATABASE || "";
+        const tableListKnex = await runMysqlQuery(`SELECT table_name,table_comment,table_schema FROM information_schema.tables WHERE table_schema = '${dbName}'`);
+        const tableList = tableListKnex[0];
+        const explores: Explore[] = [];
+        for (let i = 0; i < tableList.length; i += 1) {
+            const tableInfo = tableList[i];
+            const tableName = tableInfo.TABLE_NAME;
+            const exploreTable: Explore = {
+                name: tableName,
+                label: tableName,
+                baseTable: tableName,
+                joinedTables: [],
+                tables: {},
+                tags: [],
+                targetDatabase: SupportedDbtAdapter.POSTGRES,
+            };
+            const exploreTableInfo: CompiledTable = {
+                lineageGraph: {},
+                name: tableName,
+                label: tableName,
+                schema: dbName,
+                metrics: {},
+                dimensions: {},
+                database: exploreTable.targetDatabase,
+                sqlTable: `${exploreTable.targetDatabase}.${dbName}.${tableName}`,
+            };
+            exploreTable.tables[exploreTableInfo.name] = exploreTableInfo;
+            // eslint-disable-next-line no-await-in-loop
+            const columnsKnex = await runMysqlQuery(
+                `SELECT column_name,data_type,column_comment FROM information_schema.columns WHERE table_schema = '${dbName}' and table_name='${tableName}'`,
+            );
+            const columns = columnsKnex[0];
+            columns.forEach((column: any) => {
+                const columnName = column.COLUMN_NAME;
+                const columnType:string = column.DATA_TYPE;
+                let dimensionType:DimensionType = DimensionType.STRING;
+                if(['int','double','float'].includes(columnType)) {
+                    dimensionType = DimensionType.NUMBER
+                } else if(['date'].includes(columnType)) {
+                    dimensionType = DimensionType.DATE
+                } else if(['timestamp'].includes(columnType)) {
+                    dimensionType = DimensionType.TIMESTAMP
+                }
+                const dimension:CompiledDimension = {
+                    compiledSql: `${tableName}.${columnName}`,
+                    fieldType: FieldType.DIMENSION,
+                    hidden: false,
+                    label: columnName,
+                    name: columnName,
+                    description: column.COLUMN_COMMENT,
+                    sql: `\${TABLE}.${columnName}`,
+                    table: tableName,
+                    tableLabel: tableName,
+                    tablesReferences: [tableName],
+                    type: dimensionType
+                }
+                exploreTableInfo.dimensions[columnName] = dimension;
+            });
+            explores.push(exploreTable);
+        }
+
+        // const explores = await this.database(CachedExploresTableName)
+        //     .select(['explores'])
+        //     .where('project_uuid', projectUuid)
+        //     .limit(1);
+        // if (explores.length > 0) return explores[0].explores;
+        return explores;
     }
 
     static convertMetricFiltersFieldIdsToFieldRef = (
@@ -578,8 +642,11 @@ export class ProjectModel {
                         if (metric.filters) {
                             metric.filters.forEach((filter) => {
                                 // @ts-expect-error cached explore types might not be up to date
-                                const { fieldId, fieldRef, ...rest } =
-                                    filter.target;
+                                const {
+                                    fieldId,
+                                    fieldRef,
+                                    ...rest
+                                } = filter.target;
                                 // eslint-disable-next-line no-param-reassign
                                 filter.target = {
                                     ...rest,
@@ -609,6 +676,10 @@ export class ProjectModel {
         projectUuid: string,
         exploreName: string,
     ): Promise<Explore | ExploreError> {
+        const explores = await this.getExploresFromCache(projectUuid);
+        return explores?.find((d:any)=> d.name===exploreName) as Explore;
+
+
         return wrapOtelSpan(
             'ProjectModel.getExploreFromCache',
             {},
@@ -1326,11 +1397,9 @@ export class ProjectModel {
                         content.map((d) => {
                             const createContent = {
                                 ...d,
-                                saved_queries_version_id:
-                                    chartVersionMapping.find(
-                                        (m) =>
-                                            m.id === d.saved_queries_version_id,
-                                    )?.newId,
+                                saved_queries_version_id: chartVersionMapping.find(
+                                    (m) => m.id === d.saved_queries_version_id,
+                                )?.newId,
                             };
                             excludedFields.forEach((fieldId) => {
                                 delete createContent[fieldId];
@@ -1524,11 +1593,9 @@ export class ProjectModel {
                               dashboardTiles.map((d) => ({
                                   ...d,
                                   // we keep the same dashboard_tile_uuid
-                                  dashboard_version_id:
-                                      dashboardVersionsMapping.find(
-                                          (m) =>
-                                              m.id === d.dashboard_version_id,
-                                      )?.newId!,
+                                  dashboard_version_id: dashboardVersionsMapping.find(
+                                      (m) => m.id === d.dashboard_version_id,
+                                  )?.newId!,
                               })),
                           )
                           .returning('*')
